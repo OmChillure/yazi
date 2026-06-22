@@ -51,6 +51,11 @@ rustPlatform.buildRustPackage (finalAttrs: {
       --fish ./yazi-boot/completions/yazi.fish \
       --zsh  ./yazi-boot/completions/_yazi
 
+    installShellCompletion --cmd ya \
+      --bash ./yazi-cli/completions/ya.bash \
+      --fish ./yazi-cli/completions/ya.fish \
+      --zsh  ./yazi-cli/completions/_ya
+
     # Resize logo
     for RES in 16 24 32 48 64 128 256; do
       mkdir -p $out/share/icons/hicolor/"$RES"x"$RES"/apps
@@ -72,7 +77,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
       hash = "sha256-kEVXejDg4ChFoMNBvKlwdFEyUuTcY2VuK9j0PdafKus=";
     };
   };
-  
+
 
   meta = {
     description = "Blazing fast terminal file manager written in Rust, based on async I/O";

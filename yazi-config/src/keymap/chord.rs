@@ -1,23 +1,26 @@
 use std::{borrow::Cow, hash::{Hash, Hasher}, sync::{Arc, OnceLock}};
 
+use mlua::{ExternalError, FromLua, IntoLua, Lua, Table, Value};
 use regex::Regex;
 use serde::{Deserialize, Deserializer, de};
 use serde_with::{DeserializeAs, DisplayFromStr, OneOrMany};
-use yazi_shared::{Id, Layer, Source, event::Action};
+use yazi_binding::Iter;
+use yazi_codegen::DeserializeOver2;
+use yazi_shared::{Layer, event::{Actions, deserialize_actions}, id::Id};
 
 use super::{Key, ids::chord_id};
-use crate::{Mixable, Platform, keymap::Chords};
+use crate::{Mixable, Platform, keymap::{ChordArc, Chords}};
 
 static RE: OnceLock<Regex> = OnceLock::new();
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, DeserializeOver2)]
 pub struct Chord<const L: u8 = { Layer::Null as u8 }> {
 	#[serde(skip, default = "chord_id")]
 	pub id:    Id,
 	#[serde(deserialize_with = "deserialize_on")]
 	pub on:    Vec<Key>,
-	#[serde(deserialize_with = "deserialize_run::<L, _>")]
-	pub run:   Vec<Action>,
+	#[serde(deserialize_with = "deserialize_actions::<L, _>")]
+	pub run:   Actions,
 	#[serde(default)]
 	pub desc:  String,
 	#[serde(default)]
@@ -47,10 +50,6 @@ impl<const L: u8> Hash for Chord<L> {
 }
 
 impl<const L: u8> Chord<L> {
-	pub fn as_erased<const M: u8>(self: &Arc<Self>) -> &Arc<Chord<M>> {
-		unsafe { &*(self as *const Arc<Chord<L>> as *const Arc<Chord<M>>) }
-	}
-
 	pub fn on(&self) -> String { self.on.iter().map(ToString::to_string).collect() }
 
 	pub fn run(&self) -> String {
@@ -95,26 +94,6 @@ where
 	Ok(keys)
 }
 
-fn deserialize_run<'de, const L: u8, D>(deserializer: D) -> Result<Vec<Action>, D::Error>
-where
-	D: Deserializer<'de>,
-{
-	let Some(layer) = Layer::from_repr(L) else {
-		return Err(de::Error::custom(format!("invalid keymap layer const: {L}")));
-	};
-
-	let mut actions: Vec<Action> = OneOrMany::<DisplayFromStr>::deserialize_as(deserializer)?;
-
-	for action in &mut actions {
-		action.source = Source::Key;
-		if action.layer == Layer::Null {
-			action.layer = layer;
-		}
-	}
-
-	Ok(actions)
-}
-
 // --- Matcher
 #[derive(Default)]
 pub struct ChordMatcher {
@@ -134,10 +113,29 @@ impl ChordMatcher {
 	}
 }
 
+impl TryFrom<Table> for ChordMatcher {
+	type Error = mlua::Error;
+
+	fn try_from(value: Table) -> Result<Self, Self::Error> {
+		let id: Id = value.raw_get("id").unwrap_or_default();
+
+		Ok(Self { id, ..Default::default() })
+	}
+}
+
+impl FromLua for ChordMatcher {
+	fn from_lua(value: Value, _: &Lua) -> mlua::Result<Self> {
+		match value {
+			Value::Table(t) => t.try_into(),
+			_ => Err("expected a table of ChordMatcher".into_lua_err()),
+		}
+	}
+}
+
 // --- Iter
 #[derive(Default)]
 pub struct ChordIter {
-	pub chords:  Arc<Vec<Arc<Chord>>>,
+	pub chords:  Arc<Vec<ChordArc>>,
 	pub matcher: ChordMatcher,
 	pub offset:  usize,
 }
@@ -153,7 +151,7 @@ impl From<&Chords> for ChordIter {
 }
 
 impl Iterator for ChordIter {
-	type Item = Arc<Chord>;
+	type Item = ChordArc;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		while let Some(chord) = self.chords.get(self.offset) {
@@ -164,4 +162,8 @@ impl Iterator for ChordIter {
 		}
 		None
 	}
+}
+
+impl IntoLua for ChordIter {
+	fn into_lua(self, lua: &Lua) -> mlua::Result<Value> { Iter::new(self, None).into_lua(lua) }
 }
