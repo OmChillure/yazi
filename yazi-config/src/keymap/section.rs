@@ -7,7 +7,7 @@ use yazi_codegen::DeserializeOver2;
 use yazi_shared::Layer;
 use yazi_shim::{mlua::UserDataFieldsExt, toml::DeserializeOverHook};
 
-use super::{Key, Chord, Chords, chords::layer_default};
+use super::{Chord, Chords, Key, chords::layer_default};
 use crate::{keymap::ChordArc, mix};
 
 #[derive(Default, Deserialize, DeserializeOver2)]
