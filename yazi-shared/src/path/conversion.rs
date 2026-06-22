@@ -50,6 +50,7 @@ impl AsPath for super::Components<'_> {
 
 // --- AsPathRef
 pub trait AsPathRef<'a> {
+	#[allow(clippy::wrong_self_convention)]
 	fn as_path_ref(self) -> PathDyn<'a>;
 }
 

@@ -1,5 +1,6 @@
 // --- AsPathView
 pub trait AsPathView<'a, T> {
+	#[allow(clippy::wrong_self_convention)]
 	fn as_path_view(self) -> T;
 }
 

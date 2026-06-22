@@ -32,15 +32,9 @@ where
 		I::Item: Into<E> + Mixable,
 	{
 		it.filter(move |x| {
-			if !x.filter() {
-				false
-			} else if x.any_file() && mem::replace(any_file, true) {
-				false
-			} else if x.any_dir() && mem::replace(any_dir, true) {
-				false
-			} else {
-				true
-			}
+			x.filter()
+				&& !(x.any_file() && mem::replace(any_file, true))
+				&& !(x.any_dir() && mem::replace(any_dir, true))
 		})
 		.map(Into::into)
 	}

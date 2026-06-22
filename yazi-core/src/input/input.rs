@@ -20,30 +20,24 @@ impl Input {
 	pub fn position(&self) -> Option<Position> {
 		if self.main.visible {
 			Some(self.main.position)
-		} else if let Some(alt) = &self.alt {
-			Some(alt.position)
 		} else {
-			None
+			self.alt.as_ref().map(|alt| alt.position)
 		}
 	}
 
 	pub fn lock(&self) -> Option<InputGuard<'_>> {
 		if self.main.visible {
 			Some(InputGuard::Main(&self.main.inner))
-		} else if let Some(alt) = &self.alt {
-			Some(InputGuard::Alt(alt.inner.lock()))
 		} else {
-			None
+			self.alt.as_ref().map(|alt| InputGuard::Alt(alt.inner.lock()))
 		}
 	}
 
 	pub fn lock_mut(&mut self) -> Option<InputMutGuard<'_>> {
 		if self.main.visible {
 			Some(InputMutGuard::Main(&mut self.main.inner))
-		} else if let Some(alt) = &self.alt {
-			Some(InputMutGuard::Alt(alt.inner.lock()))
 		} else {
-			None
+			self.alt.as_ref().map(|alt| InputMutGuard::Alt(alt.inner.lock()))
 		}
 	}
 }

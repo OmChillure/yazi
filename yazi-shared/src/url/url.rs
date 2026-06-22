@@ -141,6 +141,7 @@ impl<'a> Url<'a> {
 	}
 
 	#[inline]
+	#[allow(unstable_name_collisions)]
 	pub fn loc(self) -> PathDyn<'a> {
 		match self {
 			Self::Regular(loc) => loc.as_path(),
@@ -252,6 +253,7 @@ impl<'a> Url<'a> {
 		}
 	}
 
+	#[allow(unstable_name_collisions)]
 	pub fn triple(self) -> (PathDyn<'a>, PathDyn<'a>, PathDyn<'a>) {
 		match self {
 			Self::Regular(loc) | Self::Search { loc, .. } | Self::Archive { loc, .. } => {
@@ -449,6 +451,7 @@ impl<'a> Url<'a> {
 	}
 
 	#[inline]
+	#[allow(unstable_name_collisions)]
 	pub fn uri(self) -> PathDyn<'a> {
 		match self {
 			Self::Regular(loc) => loc.uri().as_path(),
@@ -459,6 +462,7 @@ impl<'a> Url<'a> {
 	}
 
 	#[inline]
+	#[allow(unstable_name_collisions)]
 	pub fn urn(self) -> PathDyn<'a> {
 		match self {
 			Self::Regular(loc) => loc.urn().as_path(),

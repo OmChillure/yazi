@@ -280,10 +280,11 @@ impl<'a> Executor<'a> {
 				"lua" => on!(app:lua, action),
 				_ => {}
 			},
-			InputMode::Insert => match action.name.as_ref() {
-				"complete" => on!(input:complete, action),
-				_ => {}
-			},
+			InputMode::Insert => {
+				if action.name.as_ref() == "complete" {
+					on!(input:complete, action)
+				}
+			}
 			InputMode::Replace => {}
 		};
 
